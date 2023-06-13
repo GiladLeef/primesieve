@@ -104,29 +104,16 @@ static void cint_init(cint * num, size_t bits, long long int value) {
 	for (; value; *num->end = (h_cint_t)(value % cint_base), value /= cint_base, ++num->end);
 }
 
-static inline void cint_erase(cint *num) {
-    num->nat = 1;
-    size_t size = (size_t)(num->end - num->mem);
-
-    if (size > SIZE_MAX / sizeof(h_cint_t)) {
-        // Handle the case where the size is too large
-        // Add appropriate error handling or return an error code
-        // For example:
-        fprintf(stderr, "Error: Size is too large.\n");
-        return;  // Return or exit the function
+static inline void cint_erase(cint * num) {
+    size_t size = num->end - num->mem;
+    if (size <= SIZE_MAX / sizeof(h_cint_t)) {
+        num->nat = 1;
+        num->end = memset(num->mem, 0, size * sizeof(h_cint_t));
+    } else {
+        // Handle the overflow case
+        // You can choose to raise an error, log a message, or take any appropriate action
+        // based on your program's requirements.
     }
-
-    size_t num_elements = size * sizeof(h_cint_t);
-
-    if (num_elements > SIZE_MAX) {
-        // Handle the case where the number of elements is too large
-        // Add appropriate error handling or return an error code
-        // For example:
-        fprintf(stderr, "Error: Number of elements is too large.\n");
-        return;  // Return or exit the function
-    }
-
-    memset(num->mem, 0, num_elements);
 }
 
 
