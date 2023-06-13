@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
 		free(answer); // release answer memory.
 		free(N.mem); // release number memory.
 	} else
-		fputs("usage : qs [-h] [-s] [number]", stderr);
+		fputs("usage : primesieve [-h] [-s] [number]", stderr);
 	return 0 ;
 }
 
@@ -51,6 +51,5 @@ static inline void fac_display_help(char *name) {
 	printf(" - use     ./%s -test=150      to see a one-minute 150-bit factorization test\n", str);
 	printf(" - use     ./%s -limit=250     to define a limit of bit for the quadratic sieve, default to 220-bit\n", str);
 	printf(" - use     ./%s -s [number]    to not see the progress of quadratic sieve\n", str);
-	printf(" - use     gcc -Wall -pedantic -O3 main.c -o qs     to make the software compile with a great optimizer\n");
 	putchar('\n');
 }
