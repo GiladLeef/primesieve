@@ -159,7 +159,7 @@ static char *cint_to_string(const cint *num, const int base_out) {
 	return s;
 }
 
-__attribute__((unused)) static inline void cint_init_by_string(cint *num, const size_t bits, const char *str, const int base) {
+__attribute__((unused)) static inline void cintInitByString(cint *num, const size_t bits, const char *str, const int base) {
 	cint_init(num, bits, 0), cint_reinit_by_string(num, str, base);
 }
 

@@ -5,7 +5,7 @@
 
 // results of operations are last AND non-const arguments.
 
-void lanczos_mul_MxN_Nx64(const qs_sheet *qs, const uint64_t *X, const qs_sm max_size, uint64_t *Y) {
+void lanczosMulMxNNx64(const qs_sheet *qs, const uint64_t *X, const qs_sm max_size, uint64_t *Y) {
 	assert(Y != X);
 	memset(Y, 0, max_size * sizeof(uint64_t));
 	for (qs_sm a = 0, b ; a < qs->relations.length.now; ++a) {
@@ -15,7 +15,7 @@ void lanczos_mul_MxN_Nx64(const qs_sheet *qs, const uint64_t *X, const qs_sm max
 	}
 }
 
-void lanczos_mul_trans_MxN_Nx64(const qs_sheet *qs, const uint64_t *X, uint64_t *Y) {
+void lanczosMulTransMxNNx64(const qs_sheet *qs, const uint64_t *X, uint64_t *Y) {
 	assert(Y != X);
 	for (qs_sm a = 0, b; a < qs->relations.length.now; ++a) {
 		struct qs_relation *const rel = qs->relations.data[a];
@@ -24,7 +24,7 @@ void lanczos_mul_trans_MxN_Nx64(const qs_sheet *qs, const uint64_t *X, uint64_t 
 	}
 }
 
-void lanczos_mul_64xN_Nx64(const qs_sheet *qs, const uint64_t *X, const uint64_t *Y, uint64_t *Z, uint64_t *T) {
+void lanczosMul64xN_Nx64(const qs_sheet *qs, const uint64_t *X, const uint64_t *Y, uint64_t *Z, uint64_t *T) {
 	assert(X != Z && Y != Z);
 	qs_sm a, b, c, d;
 	memset(Z, 0, 256 * 8 * sizeof(*Z));
@@ -45,7 +45,7 @@ void lanczos_mul_64xN_Nx64(const qs_sheet *qs, const uint64_t *X, const uint64_t
 	}
 }
 
-uint64_t lanczos_find_non_singular_sub(const uint64_t *t, const uint64_t * last_s, uint64_t *s, uint64_t last_dim, uint64_t *w) {
+uint64_t lanczosFindNonSingular_sub(const uint64_t *t, const uint64_t * last_s, uint64_t *s, uint64_t last_dim, uint64_t *w) {
 	uint64_t i, j, dim, cols[64];
 	uint64_t M[64][2], mask, *row_i, *row_j, m_0, m_1;
 	for (i = 0; i < 64; ++i)
@@ -113,7 +113,7 @@ uint64_t lanczos_find_non_singular_sub(const uint64_t *t, const uint64_t * last_
 	return dim;
 }
 
-void lanczos_mul_Nx64_64x64_acc(qs_sheet *qs, const uint64_t *X, const uint64_t *Y, uint64_t *Z, uint64_t *T) {
+void lanczosMulNx6464x64_acc(qs_sheet *qs, const uint64_t *X, const uint64_t *Y, uint64_t *Z, uint64_t *T) {
 	qs_sm a ;
 	uint64_t b, c, d, e ;
 	for (b = 0; b < 8; Y += 8, Z += 256, ++b)
@@ -127,7 +127,7 @@ void lanczos_mul_Nx64_64x64_acc(qs_sheet *qs, const uint64_t *X, const uint64_t 
 		}
 }
 
-void lanczos_mul_64x64_64x64(const uint64_t *X, const uint64_t *Y, uint64_t *Z) {
+void lanczosMul64x64_64x64(const uint64_t *X, const uint64_t *Y, uint64_t *Z) {
 	uint64_t a, b, c, d, tmp[64];
 	for (a = 0; a < 64; tmp[a++] = c) {
 		for (b = 0, c = 0, d = X[a]; d; d >>= 1, ++b)
@@ -136,7 +136,7 @@ void lanczos_mul_64x64_64x64(const uint64_t *X, const uint64_t *Y, uint64_t *Z) 
 	memcpy(Z, tmp, sizeof(tmp));
 }
 
-void lanczos_transpose_vector(qs_sheet *qs, const uint64_t *X, uint64_t **Y) {
+void lanczosTransposeVector(qs_sheet *qs, const uint64_t *X, uint64_t **Y) {
 	qs_sm a ; // Z will be zeroed automatically by the loop.
 	uint64_t b, c, d, * Z ;
 	Z = memcpy(qs->mem.now, X, qs->relations.length.now * sizeof(*X));
@@ -145,7 +145,7 @@ void lanczos_transpose_vector(qs_sheet *qs, const uint64_t *X, uint64_t **Y) {
 			Y[b][c] |= (Z[a] & 1) * d;
 }
 
-void lanczos_combine_cols(qs_sheet *qs, uint64_t *x, uint64_t *v, uint64_t *ax, uint64_t *av) {
+void lanczosCombineCols(qs_sheet *qs, uint64_t *x, uint64_t *v, uint64_t *ax, uint64_t *av) {
 	qs_sm i, j, bit_pos, num_deps ;
 	uint64_t k, col, col_words ;
 	uint64_t mask, *mat_1[128], *mat_2[128], *tmp;
@@ -156,11 +156,11 @@ void lanczos_combine_cols(qs_sheet *qs, uint64_t *x, uint64_t *v, uint64_t *ax, 
 		mat_2[i] = mat_1[i] + col_words;
 		qs->mem.now = mat_2[i] + col_words;
 	}
-	lanczos_transpose_vector(qs, x, mat_1);
-	lanczos_transpose_vector(qs, ax, mat_2);
+	lanczosTransposeVector(qs, x, mat_1);
+	lanczosTransposeVector(qs, ax, mat_2);
 	if (num_deps == 128) {
-		lanczos_transpose_vector(qs, v, mat_1 + 64);
-		lanczos_transpose_vector(qs, av, mat_2 + 64);
+		lanczosTransposeVector(qs, v, mat_1 + 64);
+		lanczosTransposeVector(qs, av, mat_2 + 64);
 	}
 	for (i = bit_pos = 0; i < num_deps && bit_pos < qs->relations.length.now; ++bit_pos) {
 		mask = (uint64_t) 1 << (bit_pos % 64);
@@ -199,7 +199,7 @@ void lanczos_combine_cols(qs_sheet *qs, uint64_t *x, uint64_t *v, uint64_t *ax, 
 	qs->mem.now = memset(open, 0, close - open);
 }
 
-void lanczos_build_array(qs_sheet *qs, uint64_t ** target, const size_t quantity, const size_t size){
+void lanczosBuildArray(qs_sheet *qs, uint64_t ** target, const size_t quantity, const size_t size){
 	// ensure it remains memory for linear algebra
 	const char * mem_needs = (char *)qs->mem.now + quantity * size * sizeof(uint64_t);
 	const char * mem_ends = (char *)qs->mem.now + qs->mem.bytes_allocated;
@@ -208,15 +208,15 @@ void lanczos_build_array(qs_sheet *qs, uint64_t ** target, const size_t quantity
 		target[i] = qs->mem.now, qs->mem.now = mem_aligned(target[i] + size);
 }
 
-uint64_t *lanczos_block_worker(qs_sheet *qs) {
+uint64_t *lanczosBlockWorker(qs_sheet *qs) {
 	const qs_sm n_cols = qs->relations.length.now, v_size = n_cols > qs->base.length ? n_cols : qs->base.length;
 	const uint64_t safe_size = qs->lanczos.safe_length;
 	uint64_t *md[6], *xl[2], *sm[13], *tmp, *res, mask_0, mask_1, endless_guard = 1 << 11 ;
 	qs_sm i, dim_0, dim_1 ;
 	qs->mem.now = mem_aligned((uint64_t*) qs->mem.now + 1) ; // keep some padding.
-	lanczos_build_array(qs, md, 6, safe_size);
-	lanczos_build_array(qs, sm, 13, 64);
-	lanczos_build_array(qs, xl, 2, safe_size < 2048 ? 2048 : safe_size);
+	lanczosBuildArray(qs, md, 6, safe_size);
+	lanczosBuildArray(qs, sm, 13, 64);
+	lanczosBuildArray(qs, xl, 2, safe_size < 2048 ? 2048 : safe_size);
 	res = (*md) - 1; // simple "trick" to return mask + null_rows
 	for (i = 0; i < 64; ++i)
 		sm[12][i] = i;
@@ -226,44 +226,44 @@ uint64_t *lanczos_block_worker(qs_sheet *qs) {
 	for (i = 0; i < qs->relations.length.now; ++i)
 		md[1][i] = (uint64_t) rand_64();
 	memcpy(md[0], md[1], v_size * sizeof(uint64_t));
-	lanczos_mul_MxN_Nx64(qs, md[1], v_size, xl[1]);
-	lanczos_mul_trans_MxN_Nx64(qs, xl[1], md[1]);
+	lanczosMulMxNNx64(qs, md[1], v_size, xl[1]);
+	lanczosMulTransMxNNx64(qs, xl[1], md[1]);
 	memcpy(xl[0], md[1], v_size * sizeof(uint64_t));
 	do{
-		lanczos_mul_MxN_Nx64(qs, md[1], v_size, xl[1]);
-		lanczos_mul_trans_MxN_Nx64(qs, xl[1], md[4]);
-		lanczos_mul_64xN_Nx64(qs, md[1], md[4], xl[1], sm[3]);
-		lanczos_mul_64xN_Nx64(qs, md[4], md[4], xl[1], sm[5]);
+		lanczosMulMxNNx64(qs, md[1], v_size, xl[1]);
+		lanczosMulTransMxNNx64(qs, xl[1], md[4]);
+		lanczosMul64xN_Nx64(qs, md[1], md[4], xl[1], sm[3]);
+		lanczosMul64xN_Nx64(qs, md[4], md[4], xl[1], sm[5]);
 		for (i = 0; i < 64 && !(sm[3][i]); ++i);
 		if (i != 64) {
-			dim_0 = (qs_sm) lanczos_find_non_singular_sub(sm[3], sm[12], sm[11], dim_1, sm[0]);
+			dim_0 = (qs_sm) lanczosFindNonSingular_sub(sm[3], sm[12], sm[11], dim_1, sm[0]);
 			if (dim_0) {
 				mask_0 = 0;
 				for (i = 0; i < dim_0; ++i)
 					mask_0 |= (uint64_t) 1 << sm[11][i];
 				for (i = 0; i < 64; ++i)
 					sm[7][i] = (sm[5][i] & mask_0) ^ sm[3][i];
-				lanczos_mul_64x64_64x64(sm[0], sm[7], sm[7]);
+				lanczosMul64x64_64x64(sm[0], sm[7], sm[7]);
 				for (i = 0; i < 64; ++i)
 					sm[7][i] ^= (uint64_t) 1 << i;
-				lanczos_mul_64x64_64x64(sm[1], sm[3], sm[8]);
+				lanczosMul64x64_64x64(sm[1], sm[3], sm[8]);
 				for (i = 0; i < 64; ++i)
 					sm[8][i] &= mask_0;
-				lanczos_mul_64x64_64x64(sm[4], sm[1], sm[9]);
+				lanczosMul64x64_64x64(sm[4], sm[1], sm[9]);
 				for (i = 0; i < 64; ++i)
 					sm[9][i] ^= (uint64_t) 1 << i;
-				lanczos_mul_64x64_64x64(sm[2], sm[9], sm[9]);
+				lanczosMul64x64_64x64(sm[2], sm[9], sm[9]);
 				for (i = 0; i < 64; ++i)
 					sm[10][i] = ((sm[6][i] & mask_1) ^ sm[4][i]) & mask_0;
-				lanczos_mul_64x64_64x64(sm[9], sm[10], sm[9]);
+				lanczosMul64x64_64x64(sm[9], sm[10], sm[9]);
 				for (i = 0; i < qs->relations.length.now; ++i)
 					md[4][i] &= mask_0;
-				lanczos_mul_Nx64_64x64_acc(qs, md[1], sm[7], xl[1], md[4]);
-				lanczos_mul_Nx64_64x64_acc(qs, md[3], sm[8], xl[1], md[4]);
-				lanczos_mul_Nx64_64x64_acc(qs, md[2], sm[9], xl[1], md[4]);
-				lanczos_mul_64xN_Nx64(qs, md[1], xl[0], xl[1], sm[7]);
-				lanczos_mul_64x64_64x64(sm[0], sm[7], sm[7]);
-				lanczos_mul_Nx64_64x64_acc(qs, md[1], sm[7], xl[1], md[0]);
+				lanczosMulNx6464x64_acc(qs, md[1], sm[7], xl[1], md[4]);
+				lanczosMulNx6464x64_acc(qs, md[3], sm[8], xl[1], md[4]);
+				lanczosMulNx6464x64_acc(qs, md[2], sm[9], xl[1], md[4]);
+				lanczosMul64xN_Nx64(qs, md[1], xl[0], xl[1], sm[7]);
+				lanczosMul64x64_64x64(sm[0], sm[7], sm[7]);
+				lanczosMulNx6464x64_acc(qs, md[1], sm[7], xl[1], md[0]);
 				tmp = md[2], md[2] = md[3], md[3] = md[1], md[1] = md[4], md[4] = tmp;
 				tmp = sm[2], sm[2] = sm[1], sm[1] = sm[0], sm[0] = tmp;
 				tmp = sm[4], sm[4] = sm[3], sm[3] = tmp;
@@ -285,10 +285,10 @@ uint64_t *lanczos_block_worker(qs_sheet *qs) {
 	*res = 0; // mask
 
 	if(dim_0) {
-		lanczos_mul_MxN_Nx64(qs, md[0], v_size, md[3]);
-		lanczos_mul_MxN_Nx64(qs, md[1], v_size, md[2]);
-		lanczos_combine_cols(qs, md[0], md[1], md[3], md[2]);
-		lanczos_mul_MxN_Nx64(qs, md[0], v_size, md[1]);
+		lanczosMulMxNNx64(qs, md[0], v_size, md[3]);
+		lanczosMulMxNNx64(qs, md[1], v_size, md[2]);
+		lanczosCombineCols(qs, md[0], md[1], md[3], md[2]);
+		lanczosMulMxNNx64(qs, md[0], v_size, md[1]);
 		if (*md[1] == 0) // should hold (the buffer must contain only zero)
 			if (memcmp(md[1], md[1] + 1, (v_size - 1) * sizeof(uint64_t)) == 0)
 				for (i = 0; i < n_cols; *res |= (*md)[i++]);
@@ -300,8 +300,8 @@ uint64_t *lanczos_block_worker(qs_sheet *qs) {
 	return res;
 }
 
-void lanczos_reduce_matrix(qs_sheet *qs) {
-	// a filtering is not always necessary to make "lanczos_block_worker" succeed :
+void lanczosReduceMatrix(qs_sheet *qs) {
+	// a filtering is not always necessary to make "lanczosBlockWorker" succeed :
 	// - it writes to the relations [ Y lengths, relation counter ] will change
 	qs_sm a, b, c, row, col, reduced_rows = qs->base.length, *counts;
 	counts = memset(qs->buffer[1], 0, qs->base.length * sizeof(*qs->buffer[1]));
@@ -339,7 +339,7 @@ void lanczos_reduce_matrix(qs_sheet *qs) {
 	} while (row != reduced_rows);
 }
 
-uint64_t *lanczos_block(qs_sheet *qs) {
+uint64_t *lanczosBlock(qs_sheet *qs) {
 	// the worker algorithm is probabilistic with high success rate
 	// it is interested in the Y field of the relations (to build its matrix)
 	// it receives as input the raw relations then the reduced relations
@@ -359,10 +359,10 @@ uint64_t *lanczos_block(qs_sheet *qs) {
 	//
 	do {
 		if (tries == reduce_at) // 230-bit can need reduce
-			lanczos_reduce_matrix(qs);
+			lanczosReduceMatrix(qs);
 		// Try to find a subset of all exponent vectors such that
 		// the sum of their exponent vectors is the zero vector.
-		res = lanczos_block_worker(qs);
+		res = lanczosBlockWorker(qs);
 	} while (!*res && --tries);
 	return res;
 }

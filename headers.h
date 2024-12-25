@@ -16,7 +16,7 @@ typedef struct {
 	int power ;
 	int prime ;
 	int bits ;
-} fac_cint;
+} facCint;
 
 typedef struct{
 	unsigned testing ;
@@ -25,7 +25,7 @@ typedef struct{
 	unsigned qs_limit ;
 	unsigned qs_multiplier ;
 	unsigned qs_rand_seed ;
-} fac_params;
+} facParams;
 
 typedef struct {
 
@@ -34,29 +34,29 @@ typedef struct {
 		void * now ;
 	} mem;
 
-	fac_params * params ;
+	facParams * params ;
 
 	struct{
 		cint cint;
 		qs_sm done_up_to ;
 	} trial;
 
-	fac_cint * number ; // the number to factor
+	facCint * number ; // the number to factor
 
 	cint vars[10];
 	cint_sheet * calc ;
 
 	struct {
-		fac_cint * data ;
+		facCint * data ;
 		unsigned index ;
 	} questions;
 
 	struct {
-		fac_cint * data ;
+		facCint * data ;
 		unsigned index ;
 	} answers;
 
-} fac_caller;
+} facCaller;
 
 // Quadratic sieve structures
 
@@ -82,7 +82,7 @@ struct qs_relation {
 typedef struct {
 
 	// reference to the caller
-	fac_caller *caller;
+	facCaller *caller;
 
 	// computation sheet
 	cint_sheet *calc;
@@ -216,14 +216,14 @@ typedef struct {
 
 } qs_sheet;
 
-// Front-End Factor manager
-static fac_cint **c_factor(const cint *, fac_params *);
-static inline int fac_special_cases(fac_caller *);
-static inline int fac_trial_division(fac_caller *, int);
-static inline int fac_perfect_checker(fac_caller *);
-static inline int fac_primality_checker(fac_caller *);
-static inline int fac_pollard_rho_63_bits(fac_caller *);
-static void fac_push(fac_caller *, const cint *, int, int, int);
+// Front-End factor manager
+static facCint **cFactor(const cint *, facParams *);
+static inline int fac_special_cases(facCaller *);
+static inline int fac_trial_division(facCaller *, int);
+static inline int fac_perfect_checker(facCaller *);
+static inline int fac_primality_checker(facCaller *);
+static inline int fac_pollard_rho_63_bits(facCaller *);
+static void fac_push(facCaller *, const cint *, int, int, int);
 
 // Math
 static inline int is_prime_4669921(qs_sm);
@@ -249,55 +249,55 @@ static inline struct avl_node *avl_cint_inserter(void *, const void *);
 static inline void *mem_aligned(void *);
 
 // Misc.
-static inline int fac_apply_custom_param(const char *, const char *, int, unsigned *);
-static inline char *fac_fill_params(fac_params *, int, char **);
-static char *fac_answer_to_string(fac_cint **);
-static inline void fac_display_progress(const char *, double);
-static inline int fac_sort_result(const void * , const void *);
+static inline int facApplyCustomParam(const char *, const char *, int, unsigned *);
+static inline char *facFillParams(facParams *, int, char **);
+static char *facAnswerToString(facCint **);
+static inline void facDisplayProgress(const char *, double);
+static inline int facSortResult(const void * , const void *);
 
 // Quadratic sieve functions
 static inline qs_sm linear_param_resolution(const double [][2], qs_sm);
 static inline void qs_parametrize(qs_sheet *);
-static int quadratic_sieve(fac_caller *);
+static int quadraticSieve(facCaller *);
 static inline int inner_continuation_condition(qs_sheet *);
 static inline int outer_continuation_condition(qs_sheet *);
-static inline void preparation_part_1(qs_sheet *, fac_caller *);
-static inline void preparation_part_2(qs_sheet *);
+static inline void preparationpart1(qs_sheet *, facCaller *);
+static inline void preparationpart2(qs_sheet *);
 //
-static inline void preparation_part_3(qs_sheet *);
-static inline qs_sm preparation_part_3_michel(qs_sheet *qs);
+static inline void preparationpart3(qs_sheet *);
+static inline qs_sm preparationpart3_michel(qs_sheet *qs);
 //
-static inline void preparation_part_4(qs_sheet *);
-static inline void preparation_part_5(qs_sheet *);
-static inline void preparation_part_6(qs_sheet *);
-static inline void get_started_iteration(qs_sheet *);
-static inline void iteration_part_1(qs_sheet *, const cint *, cint *);
-static inline void iteration_part_2(qs_sheet *, const cint *, cint *);
-static inline void iteration_part_3(qs_sheet *, const cint *, const cint *);
-static inline qs_sm iteration_part_4(const qs_sheet *, qs_sm nth_curve, qs_sm **, cint *);
-static inline void iteration_part_5(qs_sheet *, const cint *, const cint *);
-static inline void iteration_part_6(qs_sheet *, const cint *, const cint *, const cint *, cint *);
-static inline void iteration_part_7(qs_sheet *, qs_sm, const qs_sm *);
-static inline void iteration_part_8(qs_sheet *, qs_sm, const qs_sm *);
-static int qs_register_factor(qs_sheet *);
+static inline void preparationpart4(qs_sheet *);
+static inline void preparationpart5(qs_sheet *);
+static inline void preparationpart6(qs_sheet *);
+static inline void getStartedIteration(qs_sheet *);
+static inline void iterationPart1(qs_sheet *, const cint *, cint *);
+static inline void iterationPart2(qs_sheet *, const cint *, cint *);
+static inline void iterationPart3(qs_sheet *, const cint *, const cint *);
+static inline qs_sm iterationPart4(const qs_sheet *, qs_sm nth_curve, qs_sm **, cint *);
+static inline void iterationPart5(qs_sheet *, const cint *, const cint *);
+static inline void iterationPart6(qs_sheet *, const cint *, const cint *, const cint *, cint *);
+static inline void iterationPart7(qs_sheet *, qs_sm, const qs_sm *);
+static inline void iterationPart8(qs_sheet *, qs_sm, const qs_sm *);
+static int QSRegisterFactor(qs_sheet *);
 static inline void register_relations(qs_sheet *, const cint *, const cint *, const cint *);
 static inline void register_relation_kind_1(qs_sheet *, const cint *, const qs_sm * const restrict [4]);
 static inline void register_relation_kind_2(qs_sheet *, const cint *, const cint *, const qs_sm * const restrict [4]);
-static inline void finalization_part_1(qs_sheet *, const uint64_t *);
-static inline void finalization_part_2(qs_sheet *);
-static inline int finalization_part_3(qs_sheet *);
+static inline void finalizationPart1(qs_sheet *, const uint64_t *);
+static inline void finalizationPart2(qs_sheet *);
+static inline int finalizationPart3(qs_sheet *);
 
 // Quadratic sieve Lanczos part
-static inline void lanczos_mul_MxN_Nx64(const qs_sheet *, const uint64_t *, qs_sm, uint64_t *);
-static inline void lanczos_mul_trans_MxN_Nx64(const qs_sheet *, const uint64_t *, uint64_t *);
-static void lanczos_mul_64xN_Nx64(const qs_sheet *, const uint64_t *, const uint64_t *, uint64_t *, uint64_t *);
-static uint64_t lanczos_find_non_singular_sub(const uint64_t *, const uint64_t *, uint64_t *, uint64_t, uint64_t *);
-static void lanczos_mul_Nx64_64x64_acc(qs_sheet *, const uint64_t *, const uint64_t *, uint64_t *, uint64_t *);
-static void lanczos_mul_64x64_64x64(const uint64_t *, const uint64_t *, uint64_t *);
-static void lanczos_transpose_vector(qs_sheet *, const uint64_t *, uint64_t **);
-static void lanczos_combine_cols(qs_sheet *, uint64_t *, uint64_t *, uint64_t *, uint64_t *);
-static inline void lanczos_build_array(qs_sheet *, uint64_t **, size_t, size_t);
-static inline uint64_t *lanczos_block_worker(qs_sheet *);
-static inline uint64_t * lanczos_block(qs_sheet *);
+static inline void lanczosMulMxNNx64(const qs_sheet *, const uint64_t *, qs_sm, uint64_t *);
+static inline void lanczosMulTransMxNNx64(const qs_sheet *, const uint64_t *, uint64_t *);
+static void lanczosMul64xN_Nx64(const qs_sheet *, const uint64_t *, const uint64_t *, uint64_t *, uint64_t *);
+static uint64_t lanczosFindNonSingular_sub(const uint64_t *, const uint64_t *, uint64_t *, uint64_t, uint64_t *);
+static void lanczosMulNx6464x64_acc(qs_sheet *, const uint64_t *, const uint64_t *, uint64_t *, uint64_t *);
+static void lanczosMul64x64_64x64(const uint64_t *, const uint64_t *, uint64_t *);
+static void lanczosTransposeVector(qs_sheet *, const uint64_t *, uint64_t **);
+static void lanczosCombineCols(qs_sheet *, uint64_t *, uint64_t *, uint64_t *, uint64_t *);
+static inline void lanczosBuildArray(qs_sheet *, uint64_t **, size_t, size_t);
+static inline uint64_t *lanczosBlockWorker(qs_sheet *);
+static inline uint64_t * lanczosBlock(qs_sheet *);
 
 #endif //FAC_HEADERS

@@ -1,7 +1,7 @@
-// Front-End Factor manager
-fac_cint **c_factor(const cint *N, fac_params *config) {
+// Front-End factor manager
+facCint **cFactor(const cint *N, facParams *config) {
 	void *mem;
-	fac_caller m = {0};
+	facCaller m = {0};
 	const int input_bits = (int) cint_count_bits(N);
 	int alloc_bits = (1 + (input_bits >> 9)) << 14;
 	// initially allocates 16 Kb for each 512-bit chunk.
@@ -42,7 +42,7 @@ fac_cint **c_factor(const cint *N, fac_params *config) {
 		            || fac_pollard_rho_63_bits(&m)
 		            // Quadratic sieve can assume N is 63+ bits,
 		            // isn't easily divisible, isn't a perfect power.
-		            || quadratic_sieve(&m)
+		            || quadraticSieve(&m)
 		            || fac_trial_division(&m, 2);
 		if (res == 0)
 			fac_push(&m, &m.number->cint, 0, 1, 0);
@@ -53,15 +53,15 @@ fac_cint **c_factor(const cint *N, fac_params *config) {
 	for(unsigned i = 0; i < m.answers.index; ++i)
 		bytes += m.answers.data[i].cint.end - m.answers.data[i].cint.mem + 1 ;
 	bytes *= sizeof(h_cint_t);
-	bytes += (sizeof(fac_cint) + sizeof(fac_cint*)) * (m.answers.index + 1) ;
-	fac_cint  ** res = mem = calloc(1, bytes);
+	bytes += (sizeof(facCint) + sizeof(facCint*)) * (m.answers.index + 1) ;
+	facCint  ** res = mem = calloc(1, bytes);
 	assert(mem);
 
-	qsort(m.answers.data, m.answers.index, sizeof(fac_cint), &fac_sort_result);
+	qsort(m.answers.data, m.answers.index, sizeof(facCint), &facSortResult);
 
 	mem = res + m.answers.index + 1 ;
 	for(unsigned i = 0; i < m.answers.index; ++i) {
-		fac_cint * factor = &m.answers.data[i] ;
+		facCint * factor = &m.answers.data[i] ;
 		res[i] = mem, mem = res[i] + 1 ;
 		res[i]->power = factor->power ;
 		res[i]->prime = factor->prime ;
@@ -74,7 +74,7 @@ fac_cint **c_factor(const cint *N, fac_params *config) {
 	return res;
 }
 
-int fac_special_cases(fac_caller *m) {
+int fac_special_cases(facCaller *m) {
 	int res = m->number->bits < 3 ;
 	if (res && m->answers.index == 0) {
 		const int prime = m->number->bits > 1;
@@ -83,7 +83,7 @@ int fac_special_cases(fac_caller *m) {
 	return res ;
 }
 
-int fac_trial_division(fac_caller *m, const int level) {
+int fac_trial_division(facCaller *m, const int level) {
 	cint * F = m->vars ;
 	int res = (*m->number->cint.mem & 1) == 0 ; // remove power of 2.
 	if (m->trial.done_up_to == 0){
@@ -116,7 +116,7 @@ int fac_trial_division(fac_caller *m, const int level) {
 	return res ;
 }
 
-int fac_any_root_check(fac_caller * m, const cint *N, cint *ROOT, cint *REM){
+int fac_any_root_check(facCaller * m, const cint *N, cint *ROOT, cint *REM){
 	// Can normally say if a number is a perfect power, it takes in account the trial divisions initially done.
 	// Indicates the lowest root found, not the highest, functions can call recursively if they are not "satisfied".
 	int res = 0 ;
@@ -134,7 +134,7 @@ int fac_any_root_check(fac_caller * m, const cint *N, cint *ROOT, cint *REM){
 	return res ;
 }
 
-int fac_perfect_checker(fac_caller *m) {
+int fac_perfect_checker(facCaller *m) {
 	assert(m->number->bits > 2);
 	cint *Q = m->vars, *R = Q + 1;
 	int power = fac_any_root_check(m, &m->number->cint, Q, R);
@@ -143,21 +143,21 @@ int fac_perfect_checker(fac_caller *m) {
 	return power;
 }
 
-int fac_primality_checker(fac_caller *m) {
+int fac_primality_checker(facCaller *m) {
 	m->number->prime = cint_is_prime(m->calc, &m->number->cint, m->number->bits > 2048 ? 1 : -1);
 	if (m->number->prime)
 		fac_push(m, &m->number->cint, 1, 1, 0);
 	return m->number->prime;
 }
 
-int fac_pollard_rho_63_bits(fac_caller *m) {
+int fac_pollard_rho_63_bits(facCaller *m) {
 	int res = m->number->bits > 0 && m->number->bits < 64;
 	if (res) {
 		// Perform a Pollard's Rho test, this function can't complete with a prime number.
 		qs_md n[2] = {simple_cint_to_int(&m->number->cint), 1,}; // number and its factor.
 		for (size_t limit = 7; n[1] == 1 || n[0] == n[1]; ++limit) {
 			if (m->params->silent == 0)
-				fac_display_progress("Pollard Rho", 100. * (double) limit / 21);
+				facDisplayProgress("Pollard Rho", 100. * (double) limit / 21);
 			size_t a = -1, b = 2, c = limit;
 			qs_md d, e = rand(), f = 1;
 			for (n[1] = 1, d = e %= n[0]; n[1] == 1 && --c; e = d, b <<= 1, a = -1) {
@@ -179,9 +179,9 @@ int fac_pollard_rho_63_bits(fac_caller *m) {
 }
 
 // functions submit factors of N, they don't push N itself with "forward" (otherwise there is an infinite loop).
-void fac_push(fac_caller *m, const cint * num, const int prime, const int power, const int forward) {
+void fac_push(facCaller *m, const cint * num, const int prime, const int power, const int forward) {
 	// the product of "stack last" and "stack next" must remain N.
-	fac_cint * row ;
+	facCint * row ;
 	if (forward){
 		row = &m->questions.data[m->questions.index++];
 		const size_t needed_size = num->end - num->mem + 1;
@@ -386,7 +386,7 @@ void *mem_aligned(void *ptr) {
 }
 
 // Misc.
-int fac_apply_custom_param(const char *a, const char *b, int length, unsigned *val) {
+int facApplyCustomParam(const char *a, const char *b, int length, unsigned *val) {
 	int res = memcmp(a, b, length) == 0;
 	if (res) {
 		for (; *b && !(*b >= '1' && *b <= '9'); ++b);
@@ -397,19 +397,19 @@ int fac_apply_custom_param(const char *a, const char *b, int length, unsigned *v
 	return res;
 }
 
-char *fac_fill_params(fac_params *params, int argc, char **args) {
+char *facFillParams(facParams *params, int argc, char **args) {
 	char *n = 0;
 	for (int i = 1; i < argc; ++i) {
 		char *s = args[i];
 		for (; *s && !(*s >= '1' && *s <= '9') && !(*s >= 'a' && *s <= 'z'); ++s);
 		if (*s >= 'a' && *s <= 'z') {
 			int a = // add command line parameters...
-					fac_apply_custom_param("limit=", s, 1, &params->qs_limit)
-					|| fac_apply_custom_param("testing=", s, 1, &params->testing)
-					|| fac_apply_custom_param("silent=", s, 1, &params->silent)
-					|| fac_apply_custom_param("multiplier=", s, 1, &params->qs_multiplier)
-					|| fac_apply_custom_param("rand=", s, 1, &params->qs_rand_seed)
-					|| fac_apply_custom_param("help=", s, 1, &params->help);
+					facApplyCustomParam("limit=", s, 1, &params->qs_limit)
+					|| facApplyCustomParam("testing=", s, 1, &params->testing)
+					|| facApplyCustomParam("silent=", s, 1, &params->silent)
+					|| facApplyCustomParam("multiplier=", s, 1, &params->qs_multiplier)
+					|| facApplyCustomParam("rand=", s, 1, &params->qs_rand_seed)
+					|| facApplyCustomParam("help=", s, 1, &params->help);
 			assert(a >= 0);
 		} else if (n == 0) {
 			for (n = s; *n >= '0' && *n <= '9'; ++n);
@@ -419,7 +419,7 @@ char *fac_fill_params(fac_params *params, int argc, char **args) {
 	return n;
 }
 
-char *fac_answer_to_string(fac_cint **ans) {
+char *facAnswerToString(facCint **ans) {
 	// Basic function that should return a string to represent the given answer.
 	if (ans == 0 || ans[0] == 0) return strdup("factorizer has no answer to format.") ;
 	int bytes  = 0, i, j ;
@@ -450,14 +450,14 @@ char *fac_answer_to_string(fac_cint **ans) {
 	return res;
 }
 
-void fac_display_progress(const char *name, double percentage) {
+void facDisplayProgress(const char *name, double percentage) {
 	// There are functions that print their progress.
 	printf("%s at %.02f %%...", name, percentage);
 	putchar('\r');
 	fflush(stdout);
 }
 
-int fac_sort_result(const void * lhs, const void * rhs) {
-	const fac_cint * L = lhs, *R = rhs;
+int facSortResult(const void * lhs, const void * rhs) {
+	const facCint * L = lhs, *R = rhs;
 	return h_cint_compare(&L->cint, &R->cint);
 }
