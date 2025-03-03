@@ -1,5 +1,5 @@
 # Primesieve
-A Quadratic sieve implementation in C based on michel-leonard/C-Quadratic-Sieve
+A Quadratic sieve implementation in C
 
 Compile using 
 `gcc -O3 main.c -o primesieve`
