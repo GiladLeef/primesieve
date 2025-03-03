@@ -1,62 +1,49 @@
-#include "avl.c"            // the trees.
-#include "cint.c"           // the integers.
-#include "headers.h"        // factor headers.
-#include "utils.c"          // utilities and front-end.
-#include "quadratic.c"      // quadratic sieve source.
-#include "lanczos.c"        // quadratic sieve Lanczos.
-#include "testing.c"        // quadratic sieve tests.
+// This version of the factorization software (all files) is released into the public domain.
+// The software is provided "as it" without any warranty, express or implied.
 
-// Why this project uses "cint" instead of GMP?
-// - Author seeks to understand the issues of 64+ bit integers.
-// - The original software goal was to factor a 200-bit RSA in 30 seconds.
-// - "cint" allows us to see what is sufficient to reach the goal.
+// The goal of the software is to factor integers (from the command line or a file), with no dependency.
+// The manager performs trial divisions, checks whether numbers are perfect powers, tests their primality.
+// For large numbers, the Quadratic Sieve is employed, and the output can be formatted as JSON or CSV.
 
-static inline void facDisplayVerbose(facCint **ans);
-static inline void facDisplayHelp(const char *name);
+#include "avl-trees.c"				// the binary search trees (originally a separate project)
+#include "big-num.c"				// the 64+bit integers (originally a separate project)
+#include "headers.h"				// the headers
+#include "manager.c"				// the factorization manager and i/o utils
+#include "basic-math.c"				// the math shortcuts and functions (math.h isn't used)
+#include "64-bits-factorization.c"	// the factorization for small numbers (Pollard's Rho)
+#include "quadratic-sieve.c"		// the Quadratic Sieve (essential part of this project)
+#include "block-lanczos.c"			// the Lanczos Block algorithm (essential part of this project)
 
-int main(int argc, char *argv[]) {
-    cint N;
-    facParams config = {0};
-    const char *n = facFillParams(&config, argc, argv);
+int main(int argc, const char *argv[]) {
 
-    if (config.testing) {
-        facMiniTests(&config);
-    } else if (config.help) {
-        facDisplayHelp(argv[0]);
-    } else if (n) {
-        const int bits = 64 + 4 * (int)strlen(n);
-        cintInitByString(&N, bits, n, 10); // initialize the number as a cint.
-        facCint **answer = cFactor(&N, &config); // execute the routine.
-        facDisplayVerbose(answer); // print answer.
-        free(answer); // release answer memory.
-        free(N.mem); // release number memory.
-    } else {
-        fputs("usage: primesieve [-h] [-s] [number]\n", stderr);
-    }
+	// Default state (the integer factorization software don't use global variables).
+	state state = {0};
 
-    return 0;
-}
+	// Random number generator consistent across platforms.
+	state.params.rand.seed = 0x2236b69a7d223bd;
 
-static inline void facDisplayVerbose(facCint **ans) {
-    for (int i = 0; i < 100; ++i) {
-        putchar(' ');
-    }
-    putchar('\r');
-    char *str = facAnswerToString(ans);
-    puts(str);
-    free(str);
-}
+	// The software is silent when there is no terminal.
+	state.params.tty = isatty(STDOUT_FILENO) != 0 ;
+	state.params.verbose = state.params.tty;
 
-static inline void facDisplayHelp(const char *name) {
-    const char *str = strrchr(name, '/');
-    if (!str) str = strrchr(name, '\\');
-    if (!str) str = name;
-    str++; // skip the '/' or '\\' character
+	// Read the command line arguments.
+	for (int i = 1; i < argc; ++i)
+		if (!(i + 3 < argc && read_key_and_3_values(argv + i, &state) && (i += 3)))
+			if (!(i + 2 < argc && read_key_and_2_values(argv + i, &state) && (i += 2)))
+				if (!(i + 1 < argc && read_key_value(argv + i, &state) && ++i))
+					if (!(validate_string_number(argv[i], &state) || read_flags(argv + i, &state)))
+						fprintf(stderr, "%s: Unknown argument '%s'.\n", argv[0], (state.code = 2, argv[i]));
 
-    puts("=== [ Welcome to the factor function help ] === \n");
-    printf(" - use     ./%s 123            to see the factors of 123\n", str);
-    printf(" - use     ./%s -test=150      to see a one-minute 150-bit factorization test\n", str);
-    printf(" - use     ./%s -limit=250     to define a limit of bit for the quadratic sieve, default to 220-bit\n", str);
-    printf(" - use     ./%s -s [number]    to not see the progress of quadratic sieve\n", str);
-    putchar('\n');
+	state.params.rand.seed += !state.params.rand.seed; // Optional.
+
+	if (state.params.help)
+		print_help(argv[0]); // Option --help or -h was found.
+	else if (state.code == 0 && *state.params.demand)
+		generate_input_file(&state); // Generate a factorization demand.
+	else if (state.code == 0 && prepare_file_descriptors(&state))
+		process_multi(argc, argv, &state); // Process the request(s).
+	else
+		fprintf(stderr, "Use '--help' for more information about the software.\n");
+
+	return state.code;
 }

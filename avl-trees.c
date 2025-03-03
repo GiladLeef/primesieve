@@ -3,17 +3,16 @@
 
 #include <string.h>
 
-// AVL tree is a self-balancing binary search tree, AVL stands for Adelson-Velskii and Landis :
-// - Georgy Maximovich Adelson-Velsky (1922 –2014) was a Soviet and Israeli mathematician and computer scientist
-// - Yevgeny Mikhaylovich Landis (1921 – 1997) was a Soviet mathematician
+// This file is released "as it" into the public domain, without any warranty, express or implied.
+// AVL tree is a self-balancing binary search tree, AVL stands for Adelson-Velskii and Landis.
 
 enum avl_direction {
 	AVL_LOW_TO_HIGH, AVL_HIGH_TO_LOW,
 };
 
 struct avl_node {
-	void * key ;
-	void * value ;
+	void *key;
+	void *value;
 	struct avl_node *rel[3]; // [0, 1, 2] = [left child, right child, parent]
 	int height;
 };
@@ -23,9 +22,12 @@ struct avl_manager {
 	size_t count;
 	int affected;
 	int search_only;
+
 	int (*comparator)(const void *, const void *);
-	struct avl_node * (*inserter)(void *, const void *);
-	void * inserter_argument ;
+
+	struct avl_node *(*inserter)(void *, const void *);
+
+	void *inserter_argument;
 };
 
 #define avl_left rel[0]
@@ -138,8 +140,8 @@ static inline void h_avl_rebalance(struct avl_node **root, struct avl_node *top)
 	}
 }
 
-struct avl_node *avl_at(struct avl_manager *const manager, const void * key) {
-	// #1 Abdul Bari jDM6_TnYIqE
+struct avl_node *avl_at(struct avl_manager *const manager, const void *key) {
+	// retrieves a node from an AVL tree based on a specified key.
 	struct avl_node *curr, *new_node;
 	int i;
 	if (manager->root) {
@@ -157,7 +159,7 @@ struct avl_node *avl_at(struct avl_manager *const manager, const void * key) {
 					break;
 				}
 			} else if (cmp == 0) {
-				manager->affected = 0 ;
+				manager->affected = 0;
 				return curr;
 			} else {
 				if (curr->avl_left) {
