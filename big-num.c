@@ -121,14 +121,7 @@ static void cint_init(cint *num, size_t bits, long long int val) {
 }
 
 static inline void cint_erase(cint *num) {
-    if (num == NULL || num->mem == NULL || num->end == NULL || num->end < num->mem) {
-        return; 
-    }
-
-    size_t count = (size_t)(num->end - num->mem);
-    memset(num->mem, 0, count * sizeof(h_cint_t));
-
-    num->nat = 1; 
+	num->nat = 1, num->end = memset(num->mem, 0, (size_t) (num->end - num->mem) * sizeof(h_cint_t));
 }
 
 static void cint_reinit(cint *num, long long int val) {
